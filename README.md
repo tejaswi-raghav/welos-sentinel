@@ -2,6 +2,8 @@
 
 WELOS is an integrated renewable-energy and rainwater product concept with a local, offline-first control OS. This repository contains the public site, an interactive 3D product model, a browser control simulator and ESP32-S3 reference firmware.
 
+This fork adds **WELOS Sentinel**, a bounded AI operations layer powered by NVIDIA Nemotron 3 Super through Nebius Token Factory. Sentinel converts the live simulator snapshot into an evidence-backed assessment and operator action queue. It is advisory only: deterministic safety logic retains actuator authority.
+
 ## Run
 ```bash
 npm install
@@ -16,6 +18,19 @@ Open the local URL shown by Vite. The product tools are separate entry points:
 - `/model.html?exploded=1` — opens the 3D assembly with its components separated
 - `/configure.html` — climate-informed or manual site configurator with a live 3D add-on preview
 - `/control.html` — live WELOS OS simulator
+- `/control.html#sentinel` — Nemotron-powered operator assessment inside the simulator
+
+## Nemotron on Nebius
+
+The Vercel function at `api/operator.js` calls Nebius Token Factory's OpenAI-compatible endpoint using `nvidia/nemotron-3-super-120b-a12b`. Configure these server-side variables:
+
+```bash
+NEBIUS_API_KEY=your-key
+WELOS_MODEL=nvidia/nemotron-3-super-120b-a12b
+NEBIUS_BASE_URL=https://api.tokenfactory.us-central1.nebius.com/v1
+```
+
+If no API key is present, Sentinel visibly returns a deterministic demo assessment so the UI can still be evaluated. Personal telemetry is sent only when the operator explicitly requests an assessment; no model output can directly actuate the simulated or physical system.
 
 ## Product foundation
 

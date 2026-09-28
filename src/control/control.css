@@ -129,6 +129,37 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--amber); outline
 .control-panel, .scenario-panel { grid-column: span 4; }
 .events-panel { grid-column: span 8; }
 .actuator-panel { grid-column: span 4; }
+.operator-panel { grid-column: 1 / -1; border-color: var(--amber); }
+.operator-panel > header { background: linear-gradient(90deg, rgba(240,165,14,.12), transparent 55%); }
+.operator-layout { display: grid; grid-template-columns: minmax(260px,.8fr) minmax(0,1.6fr); gap: 28px; }
+.operator-intro { padding-right: 28px; border-right: 1px solid var(--line-strong); }
+.operator-kicker, .operator-section-label, .operator-model { display: block; color: var(--amber); font: 500 8px/1.5 "Fira Code", monospace; letter-spacing: .12em; }
+.operator-intro h3 { max-width: 520px; margin: 13px 0 9px; font-size: clamp(22px,2.4vw,36px); line-height: 1; letter-spacing: -.045em; }
+.operator-intro > p { max-width: 620px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.operator-state { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin: 18px 0 10px; }
+.operator-state span { padding: 9px; border: 1px solid var(--line); color: var(--dim); font: 500 7px/1.4 "Fira Code", monospace; }
+.operator-state b { display: block; margin-top: 5px; color: var(--text); font-size: 9px; }
+.operator-run { width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; border: 1px solid var(--amber); background: var(--amber); color: #000; cursor: pointer; font: 700 10px/1 "Fira Code", monospace; letter-spacing: .06em; }
+.operator-run:disabled { cursor: progress; opacity: .6; }
+.operator-error { margin-top: 8px; padding: 9px; border-left: 2px solid var(--red); color: var(--text); background: rgba(240,165,14,.08); font-size: 10px; }
+.operator-model { margin-top: 9px; color: var(--dim); }
+.operator-output { min-height: 292px; }
+.priority-list { display: grid; gap: 6px; margin: 10px 0 18px; }
+.priority { min-height: 62px; display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--amber); }
+.priority > i { color: var(--dim); font: normal 9px/1 "Fira Code", monospace; }
+.priority b { font-size: 11px; }
+.priority p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.45; }
+.priority > span { color: var(--amber); font: 600 8px/1 "Fira Code", monospace; text-transform: uppercase; }
+.priority-critical { border-left-color: #ff4b32; }
+.priority-warning { border-left-color: var(--amber); }
+.priority-watch { border-left-color: #f2d36b; }
+.operator-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.operator-columns > div { padding: 12px; border: 1px solid var(--line); }
+.operator-columns ol, .operator-columns ul { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.operator-empty { min-height: 292px; display: grid; place-content: center; justify-items: center; padding: 30px; border: 1px dashed var(--line-strong); text-align: center; }
+.operator-empty i { width: 54px; height: 54px; display: grid; place-items: center; border: 1px solid var(--amber); border-radius: 50%; color: var(--amber); font: normal 600 14px/1 "Fira Code", monospace; }
+.operator-empty p { margin: 15px 0 7px; font-size: 12px; }
+.operator-empty small { color: var(--dim); font: 400 8px/1.5 "Fira Code", monospace; }
 
 .power-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .flow-node { min-height: 86px; position: relative; display: flex; flex-direction: column; justify-content: center; padding: 12px 14px 12px 20px; border: 1px solid var(--line); background: var(--surface-2); }
@@ -272,6 +303,9 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--amber); outline
   .resource-bus, .flow-note { grid-column: 1 / -1; }
   .flow-note { grid-template-columns: 1fr; gap: 5px; }
   .control-footer { display: grid; }
+  .operator-layout { grid-template-columns: 1fr; }
+  .operator-intro { padding: 0 0 22px; border-right: 0; border-bottom: 1px solid var(--line-strong); }
+  .operator-columns { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 420px) {

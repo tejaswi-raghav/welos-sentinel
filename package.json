@@ -1,5 +1,5 @@
 {
-  "name": "sunwindrain-landing",
+  "name": "welos-sentinel",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -10,17 +10,18 @@
     "test:control": "node --test src/control/engine.test.js",
     "test:model": "node --test src/model/parts.test.js",
     "test:configure": "node --test src/configurator/recommend.test.js",
-    "check": "npm run test:control && npm run test:model && npm run test:configure && npm run build",
+    "test:operator": "node --test src/control/operator.test.js api/operator.test.js",
+    "check": "npm run test:control && npm run test:model && npm run test:configure && npm run test:operator && npm run build",
     "firmware:build": "pio run -d firmware"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
-    "@vitejs/plugin-react": "^4.3.1",
+    "@vitejs/plugin-react": "^5.2.0",
     "gsap": "^3.15.0",
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "three": "0.186.0",
-    "vite": "^5.4.10"
+    "vite": "^7.3.6"
   }
 }

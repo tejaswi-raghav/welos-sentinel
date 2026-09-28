@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { createControllerState, DEFAULT_CONFIG, evaluateController, MODES } from "./engine.js";
 import { advanceSimulation, createInitialSensors, SCENARIOS } from "./simulator.js";
+import { buildTelemetrySnapshot, demoOperatorAnalysis } from "./operator.js";
 import "./control.css";
 import "../page-brand.css";
 
@@ -43,6 +44,7 @@ function App() {
   const [history, setHistory] = useState(() => [historyPoint(initialSensors, initialResult)]);
   const [events, setEvents] = useState(() => [{ id: 1, time: initialSensors.timestamp, level: "info", text: "Control engine online; all interlocks validated" }]);
   const [acknowledged, setAcknowledged] = useState([]);
+  const [operator, setOperator] = useState({ status: "idle", analysis: null, live: false, model: "nvidia/nemotron-3-super-120b-a12b", error: "" });
   const controllerRef = useRef(initialResult.nextState);
   const scenarioRef = useRef(scenario);
   const manualRef = useRef({ enabled: manualEnabled, requestedMode: manualMode });
@@ -102,6 +104,30 @@ function App() {
     setEvents((items) => [{ id: Date.now(), time: sensors.timestamp, level: "info", text: `Simulation profile loaded: ${scenarioLabels[nextScenario]}` }, ...items].slice(0, 20));
   };
 
+  const requestOperatorAnalysis = async () => {
+    setOperator((current) => ({ ...current, status: "loading", error: "" }));
+    const telemetry = buildTelemetrySnapshot({ sensors, result, controller, alarms: activeAlarms, scenario });
+    try {
+      const response = await fetch("/api/operator", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ telemetry }) });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Operator analysis failed");
+      setOperator({ status: "ready", analysis: payload.analysis, live: Boolean(payload.live), model: payload.model, error: "" });
+      setEvents((items) => [{ id: Date.now(), time: sensors.timestamp, level: "info", text: "Sentinel assessment generated via " + (payload.live ? "Nebius" : "local demo") }, ...items].slice(0, 20));
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        setOperator((current) => ({
+          ...current,
+          status: "ready",
+          analysis: demoOperatorAnalysis(telemetry),
+          live: false,
+          error: "Local preview mode — deploy to Vercel and add NEBIUS_API_KEY for live inference.",
+        }));
+        return;
+      }
+      setOperator((current) => ({ ...current, status: "error", error: error.message || "Operator analysis failed" }));
+    }
+  };
+
   return (
     <div className="control-app">
       <header className="topbar">
@@ -113,7 +139,7 @@ function App() {
 
       <aside className="rail" aria-label="Control sections">
         <span className="rail-label">OPERATIONS</span>
-        {["Overview", "Energy", "Water", "Maintenance", "Events"].map((item, index) => <a key={item} href={`#${item.toLowerCase()}`} className={index === 0 ? "active" : ""}><i>{String(index + 1).padStart(2, "0")}</i><span>{item}</span></a>)}
+        {["Overview", "Sentinel", "Energy", "Water", "Maintenance", "Events"].map((item, index) => <a key={item} href={`#${item.toLowerCase()}`} className={index === 0 ? "active" : ""}><i>{String(index + 1).padStart(2, "0")}</i><span>{item}</span></a>)}
         <div className="rail-version"><span>ENGINE</span><b>v1.0.0</b><small>REFERENCE BUILD</small></div>
       </aside>
 
@@ -132,6 +158,9 @@ function App() {
         </section>
 
         <section className="dashboard-grid">
+          <Panel title="Nemotron operator" code="SENTINEL / AI" className="operator-panel" id="sentinel">
+            <OperatorPanel operator={operator} onAnalyze={requestOperatorAnalysis} mode={result.mode} alarms={activeAlarms.length} />
+          </Panel>
           <Panel title="Live resource bus" code="ENERGY / 01" className="power-panel" id="energy">
             <PowerFlow result={result} sensors={sensors} />
           </Panel>
@@ -173,6 +202,28 @@ function Panel({ title, code, className = "", id, children }) {
 
 function Metric({ label, value, meta, tone }) {
   return <div className={`metric tone-${tone}`}><span>{label}</span><b>{value}</b><small>{meta}</small></div>;
+}
+
+function OperatorPanel({ operator, onAnalyze, mode, alarms }) {
+  const analysis = operator.analysis;
+  return <div className="operator-layout">
+    <div className="operator-intro">
+      <span className="operator-kicker">NVIDIA NEMOTRON 3 SUPER · NEBIUS TOKEN FACTORY</span>
+      <h3>{analysis?.headline || "Ask the system, not a generic chatbot."}</h3>
+      <p>{analysis?.assessment || "Sentinel packages the live deterministic telemetry into a bounded operator assessment. It can recommend; it cannot actuate."}</p>
+      <div className="operator-state"><span>CONTROL MODE <b>{mode}</b></span><span>ACTIVE ALARMS <b>{String(alarms).padStart(2, "0")}</b></span><span>INFERENCE <b>{operator.live ? "LIVE" : operator.status === "ready" ? "DEMO" : "READY"}</b></span></div>
+      <button className="operator-run" onClick={onAnalyze} disabled={operator.status === "loading"}>{operator.status === "loading" ? "ANALYZING TELEMETRY…" : analysis ? "REFRESH ASSESSMENT" : "RUN SENTINEL ASSESSMENT"}<b>↗</b></button>
+      {operator.error && <div className="operator-error">{operator.error}</div>}
+      <small className="operator-model">{operator.model}</small>
+    </div>
+    <div className="operator-output">
+      {analysis ? <>
+        <span className="operator-section-label">PRIORITY QUEUE</span>
+        <div className="priority-list">{analysis.priorities.map((item, index) => <article key={item.title + index} className={`priority priority-${item.severity}`}><i>{String(index + 1).padStart(2, "0")}</i><div><b>{item.title}</b><p>{item.reason}</p></div><span>{item.severity}</span></article>)}</div>
+        <div className="operator-columns"><div><span className="operator-section-label">RECOMMENDED ACTIONS</span><ol>{analysis.actions.map((item) => <li key={item}>{item}</li>)}</ol></div><div><span className="operator-section-label">SAFETY BOUNDARY</span><ul>{analysis.constraints.map((item) => <li key={item}>{item}</li>)}</ul></div></div>
+      </> : <div className="operator-empty"><i>AI</i><p>No model output yet. The deterministic engine remains in full control.</p><small>Snapshot scope: energy · storage · water · environment · alarms · actuators</small></div>}
+    </div>
+  </div>;
 }
 
 function PowerFlow({ result, sensors }) {
